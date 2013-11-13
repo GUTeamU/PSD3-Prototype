@@ -4,7 +4,12 @@ from HelperFunctions import *
 
 # Import the sessions
 # Present the user with the sessions
-init_db()
+db = init_db()
+print "before"
+getSessions(db)
+print "After"
+insertSession(db, "PSD3")
+getSessions(db)
 #showAvailableSessions()
 
 # Get user input for selecting the session
