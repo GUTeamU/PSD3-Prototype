@@ -46,34 +46,47 @@ def getClasses(db):
 def insertSession(db, sessionID, start, end, capacity):
 	cursor = db.cursor()
 	try:
-		
-		
 		# Thanks to this stack overflow answer: http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
 		startSecs = time.mktime(datetime.datetime.strptime(start, "%d/%m/%Y %H:%M").timetuple())
 		endSecs = time.mktime(datetime.datetime.strptime(end, "%d/%m/%Y %H:%M").timetuple())
 		
 		cursor.execute("INSERT INTO sessions(session_type_id, starts, ends, capacity) VALUES (?, ?, ?, ?)", (sessionID, startSecs, endSecs, capacity) )
 		db.commit()
-
 	except:
 		print "Class not found."
 	finally:
 		cursor.close()
 
 # Prints the list of sessions available for a class via its unique ID.
-def getSessions(db, sessionID):
+def getSessions(db, classID):
 	cursor = db.cursor()
 	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends, sessions.capacity \
 	               FROM sessions, session_types \
 	               WHERE sessions.session_type_id==session_types.id \
-	               AND session_types.id==(?)", (sessionID,))
+	               AND session_types.id==(?)", (classID,))
 	rows = cursor.fetchall()
 	if not rows:
-		print "Invalid session selection"
+		print "Invalid session selection."
 	else:
 		for row in rows:
 			print "%s. %s: Start time: %s, End time: %s, Capacity: %s, Space Available: %s " \
 			% (row[0], row[1], row[2], row[3], row[4], getSlotsAvailable(db, row[0]) )
+	cursor.close()
+
+# Prints the specified sessions information
+def getSession(db, sessionID):
+	cursor = db.cursor()
+	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends, sessions.capacity \
+	               FROM sessions, session_types \
+	               WHERE sessions.session_type_id==session_types.id \
+	               AND sessions.id==(?)", (sessionID,))
+	rows = cursor.fetchall()
+	if not rows:
+		print "Invalid session selection."
+	else:
+		row = rows[0]
+		print "%s. %s: Start time: %s, End time: %s, Capacity: %s, Space Available: %s " \
+		% (row[0], row[1], row[2], row[3], row[4], getSlotsAvailable(db, row[0]) )
 	cursor.close()
 
 # Returns the number of available spaces in a given session via its unique session ID.
@@ -93,17 +106,40 @@ def getSlotsAvailable(db, sessionID):
 
 # Inserts a user into a session if there is enough space.
 # There will need to be more error checking added later on for this function,
-# eg. that they haven't already signed up for a session.
-def userJoinSession(db, sessionID, userID):
+# eg. that they haven't already signed up for a session, checking user exists etc.
+def userJoinSession(db, sessionID, username):
 	cursor = db.cursor()
-	if(getSlotsAvailable(db, sessionID) > 0):
-		cursor.execute("INSERT INTO session_users(user_id, session_id) VALUES (?, ?)", (userID, sessionID) )
-		db.commit()
+	cursor.execute("SELECT id FROM users WHERE username==(?)", (username,))
+	temp = cursor.fetchall()
+	if temp:
+		userID = temp[0][0]
+		if(getSlotsAvailable(db, sessionID) > 0):
+			cursor.execute("INSERT INTO session_users(user_id, session_id) VALUES (?, ?)", (userID, sessionID) )
+			db.commit()
+	else:
+		print "User not in users table"
 	cursor.close()
 
 # Shows the user the sessions they have signed up for.
-def showUsersSessions(db, userID):
-	pass
+def showUsersSessions(db, username):
+	cursor = db.cursor()
+	cursor.execute("SELECT id FROM users WHERE username==(?)", (username,))
+	temp = cursor.fetchall()
+	if temp:
+		userID = temp[0][0]
+		cursor.execute("SELECT session_id \
+		               FROM session_users \
+		               WHERE user_id==(?)", (userID,))
+		rows = cursor.fetchall()
+		if rows:
+			for row in rows:
+				print row[0]
+				getSession(db, row[0])
+		else:
+			print "Not signed up to any sessions."
+	else:
+		print "User not in users table."
+	cursor.close()
 
 # Creates a user in the user database.
 def createUser(db, name, password, barcode):
@@ -115,14 +151,14 @@ def createUser(db, name, password, barcode):
 # Gets a list of users and their barcodes.
 def getUsers(db):
 	cursor = db.cursor()
-	cursor.execute("SELECT username, barcode FROM users")
+	cursor.execute("SELECT id, username, barcode FROM users")
 	rows = cursor.fetchall()
 	users = []
 	if not rows:
 		print "No users."
 	else:
 		for row in rows:
-			print "%s, %s" % (row[0], row[1])
+			print "%s, %s, %s" % (row[0], row[1], row[2])
 			users.append(str(row[1]))
 	cursor.close()
 	return users
@@ -136,10 +172,10 @@ def loginUser(db, name, pw):
 		print "This user is not registered on the system."
 		return false
 	elif rows[0][0] == pw:
-		print "Successful"
+		print "Successful."
 		return True
 	else:
-		print "Login Failed"
+		print "Login Failed."
 		return False
 	cursor.close()	
 	
