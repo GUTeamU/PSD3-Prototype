@@ -17,17 +17,19 @@ def init_db():
 	db.commit()	
 	cursor.close()
 	return db
-	
+
+# Creates a class, eg. PSD3 or Algs.	
 def createClass(db, className):
 	cursor = db.cursor()
 	cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )	# You need the comma at the end.
 																					# It won't work without it for some reason.
 	db.commit()
 	cursor.close()
-	
+
+# Returns the list of classes currently added.
 def getClasses(db):
 	cursor = db.cursor()
-	cursor.execute("SELECT sessions.id, session_types.Label FROM sessions, session_types WHERE sessions.session_type_id=session_types.id")
+	cursor.execute("SELECT session_types.id, session_types.Label FROM session_types")
 	rows = cursor.fetchall()
 	classes = []
 	if not rows:
@@ -38,12 +40,13 @@ def getClasses(db):
 			classes.append(str(row[1]))
 	cursor.close()
 	return classes
-	
-def insertSession(db, className, start, end, capacity):
+
+# Creates a session. Session must be associated with a class that already exists in the database.
+# Class is inputted by its unique ID.	
+def insertSession(db, sessionID, start, end, capacity):
 	cursor = db.cursor()
-	cursor.execute("SELECT id FROM session_types WHERE label=(?)", (className,))
 	try:
-		sessionID = cursor.fetchone()[0]
+		
 		
 		# Thanks to this stack overflow answer: http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
 		startSecs = time.mktime(datetime.datetime.strptime(start, "%d/%m/%Y %H:%M").timetuple())
@@ -56,7 +59,8 @@ def insertSession(db, className, start, end, capacity):
 		print "Class not found."
 	finally:
 		cursor.close()
-	
+
+# Prints the list of sessions available for a class via its unique ID.
 def getSessions(db, sessionID):
 	cursor = db.cursor()
 	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends, sessions.capacity \
@@ -72,6 +76,7 @@ def getSessions(db, sessionID):
 			% (row[0], row[1], row[2], row[3], row[4], getSlotsAvailable(db, row[0]) )
 	cursor.close()
 
+# Returns the number of available spaces in a given session via its unique session ID.
 def getSlotsAvailable(db, sessionID):
 	cursor = db.cursor()	
 	cursor.execute("SELECT sessions.capacity \
@@ -86,6 +91,9 @@ def getSlotsAvailable(db, sessionID):
 	cursor.close()
 	return capacity-len(rows)
 
+# Inserts a user into a session if there is enough space.
+# There will need to be more error checking added later on for this function,
+# eg. that they haven't already signed up for a session.
 def userJoinSession(db, sessionID, userID):
 	cursor = db.cursor()
 	if(getSlotsAvailable(db, sessionID) > 0):
@@ -93,15 +101,18 @@ def userJoinSession(db, sessionID, userID):
 		db.commit()
 	cursor.close()
 
+# Shows the user the sessions they have signed up for.
 def showUsersSessions(db, userID):
 	pass
 
+# Creates a user in the user database.
 def createUser(db, name, password, barcode):
 	cursor = db.cursor()
 	cursor.execute("INSERT INTO users(username, password, barcode) VALUES (?, ?, ?)", (name, password, barcode) )
 	db.commit()
 	cursor.close()
 
+# Gets a list of users and their barcodes.
 def getUsers(db):
 	cursor = db.cursor()
 	cursor.execute("SELECT username, barcode FROM users")
@@ -116,6 +127,7 @@ def getUsers(db):
 	cursor.close()
 	return users
 
+# A simple login function.
 def loginUser(db, name, pw):
 	cursor = db.cursor()
 	cursor.execute("SELECT password FROM users WHERE username=(?)", (name,))
@@ -129,12 +141,7 @@ def loginUser(db, name, pw):
 	else:
 		print "Login Failed"
 		return False
-	cursor.close()
-
-
-	
-
-	
+	cursor.close()	
 	
 # if __name__ == '__main__':
 # 	run()
