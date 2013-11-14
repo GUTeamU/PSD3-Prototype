@@ -39,7 +39,7 @@ def getClasses(db):
 	cursor.close()
 	return classes
 	
-def insertSession(db, className, start, end):
+def insertSession(db, className, start, end, capacity):
 	cursor = db.cursor()
 	cursor.execute("SELECT id FROM session_types WHERE label=(?)", (className,))
 	try:
@@ -49,7 +49,7 @@ def insertSession(db, className, start, end):
 		startSecs = time.mktime(datetime.datetime.strptime(start, "%d/%m/%Y %H:%M").timetuple())
 		endSecs = time.mktime(datetime.datetime.strptime(end, "%d/%m/%Y %H:%M").timetuple())
 		
-		cursor.execute("INSERT INTO sessions(session_type_id, starts, ends) VALUES (?, ?, ?)", (sessionID, startSecs, endSecs) )
+		cursor.execute("INSERT INTO sessions(session_type_id, starts, ends, capacity) VALUES (?, ?, ?, ?)", (sessionID, startSecs, endSecs, capacity) )
 		db.commit()
 
 	except:
@@ -59,7 +59,7 @@ def insertSession(db, className, start, end):
 	
 def getSessions(db, sessionID):
 	cursor = db.cursor()
-	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends \
+	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends, sessions.capacity \
 	               FROM sessions, session_types \
 	               WHERE sessions.session_type_id==session_types.id \
 	               AND session_types.id==(?)", (sessionID,))
@@ -68,8 +68,24 @@ def getSessions(db, sessionID):
 		print "Invalid session selection"
 	else:
 		for row in rows:
-			print "%s. %s: Start time: %s, End time: %s" % (row[0], row[1], row[2], row[3])
+			print "%s. %s: Start time: %s, End time: %s, Capacity: %s" % (row[0], row[1], row[2], row[3], row[4])
 	cursor.close()
+
+def getSlotsAvailable(db, sessionID):
+	cursor = db.cursor()
+	
+	cursor.execute("SELECT sessions.capacity \
+	               FROM sessions \
+	               WHERE sessions.id==(?)", (sessionID,))
+	capacity = cursor.fetchall()[0][0]
+	
+	cursor.execute("SELECT session_users.session_id \
+	               FROM session_users \
+	               WHERE session_users.session_id==(?)", (sessionID,))
+	rows = cursor.fetchall()
+	
+	cursor.close()
+	return capacity-len(rows)
 
 
 def createUser(db, name, password, barcode):
