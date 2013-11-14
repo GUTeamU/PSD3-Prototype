@@ -68,7 +68,18 @@ def createUser(db, name, password, barcode):
 	cursor.close()
 
 def getUsers(db):
-	pass
+	cursor = db.cursor()
+	cursor.execute("SELECT username, barcode FROM users")
+	rows = cursor.fetchall()
+	users = []
+	if not rows:
+		print "No users."
+	else:
+		for row in rows:
+			print "%s, %s" % (row[0], row[1])
+			users.append(str(row[1]))
+	cursor.close()
+	return users
 
 def loginUser(db, name, password):
 	pass
