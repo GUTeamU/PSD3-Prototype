@@ -11,6 +11,7 @@ createClass(db, "PSD3")
 createClass(db, "Algs3")
 insertSession(db, "PSD3", "14/11/2013 3:00", "14/11/2013 4:00")
 insertSession(db, "Algs3", "14/11/2013 3:00", "14/11/2013 4:00")
+createUser(db, "Michael Cromie", "123456", "122132132142")
 
 getClasses(db)
 print "After"

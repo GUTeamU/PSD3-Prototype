@@ -22,7 +22,7 @@ def createClass(db, className):
 	cursor = db.cursor()
 	cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )	# You need the comma at the end.
 																					# It won't work without it for some reason.
-	db.commit()	
+	db.commit()
 	cursor.close()
 	
 def getClasses(db):
@@ -61,7 +61,11 @@ def getSession(db, sessionID):
 	pass
 
 def createUser(db, name, password, barcode):
-	pass
+	cursor = db.cursor()
+	cursor.execute("INSERT INTO users(username, password, barcode) VALUES (?, ?, ?)", (name, password, barcode) )
+	
+	db.commit()
+	cursor.close()
 
 def getUsers(db):
 	pass
