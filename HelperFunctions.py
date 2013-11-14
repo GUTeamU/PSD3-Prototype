@@ -57,8 +57,20 @@ def insertSession(db, className, start, end):
 	finally:
 		cursor.close()
 	
-def getSession(db, sessionID):
-	pass
+def getSessions(db, sessionID):
+	cursor = db.cursor()
+	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends \
+	               FROM sessions, session_types \
+	               WHERE sessions.session_type_id==session_types.id \
+	               AND session_types.id==(?)", (sessionID,))
+	rows = cursor.fetchall()
+	if not rows:
+		print "Invalid session selection"
+	else:
+		for row in rows:
+			print "%s. %s: Start time: %s, End time: %s" % (row[0], row[1], row[2], row[3])
+	cursor.close()
+
 
 def createUser(db, name, password, barcode):
 	pass

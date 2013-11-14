@@ -16,6 +16,7 @@ getClasses(db)
 print "After"
 
 insertSession(db, "Ls", "14/11/2013 3:00", "14/11/2013 4:00")
+getSessions(db, 1)
 #showAvailableSessions()
 
 # Get user input for selecting the session
