@@ -5,11 +5,17 @@ from HelperFunctions import *
 # Import the sessions
 # Present the user with the sessions
 db = init_db()
-print "before"
-getSessions(db)
+
+getClasses(db)
+createClass(db, "PSD3")
+createClass(db, "Algs3")
+insertSession(db, "PSD3", "14/11/2013 3:00", "14/11/2013 4:00")
+insertSession(db, "Algs3", "14/11/2013 3:00", "14/11/2013 4:00")
+
+getClasses(db)
 print "After"
-insertSession(db, "PSD3")
-getSessions(db)
+
+insertSession(db, "Ls", "14/11/2013 3:00", "14/11/2013 4:00")
 #showAvailableSessions()
 
 # Get user input for selecting the session
