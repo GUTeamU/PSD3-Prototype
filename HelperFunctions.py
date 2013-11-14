@@ -83,12 +83,13 @@ def getUsers(db):
 
 def loginUser(db, name, pw):
 	cursor = db.cursor()
-	cursor.execute("SELECT password FROM users WHERE name=username") # don't even know why I thought this would work
+	cursor.execute("SELECT password FROM users WHERE username=name") # don't even know why I thought this would work
 	rows = cursor.fetchall()
+	print "%s" & (rows[0][0])
 	if not rows:
 		print "This user is not registered on the system."
 		return false
-	elif row[0] == pw:
+	elif rows[0][0] == pw:
 		return true
 	else:
 		return false
