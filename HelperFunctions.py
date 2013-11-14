@@ -27,7 +27,6 @@ def createClass(db, className):
 def getClasses(db):
 	cursor = db.cursor()
 	cursor.execute("SELECT sessions.id, session_types.Label FROM sessions, session_types WHERE sessions.session_type_id=session_types.id")
-	db.commit()
 	rows = cursor.fetchall()
 	classes = []
 	if not rows:
