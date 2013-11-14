@@ -63,7 +63,6 @@ def getSession(db, sessionID):
 def createUser(db, name, password, barcode):
 	cursor = db.cursor()
 	cursor.execute("INSERT INTO users(username, password, barcode) VALUES (?, ?, ?)", (name, password, barcode) )
-	
 	db.commit()
 	cursor.close()
 
@@ -83,16 +82,17 @@ def getUsers(db):
 
 def loginUser(db, name, pw):
 	cursor = db.cursor()
-	cursor.execute("SELECT password FROM users WHERE username=name") # don't even know why I thought this would work
+	cursor.execute("SELECT password FROM users WHERE username=(?)", (name,))
 	rows = cursor.fetchall()
-	print "%s" & (rows[0][0])
 	if not rows:
 		print "This user is not registered on the system."
 		return false
 	elif rows[0][0] == pw:
-		return true
+		print "Successful"
+		return True
 	else:
-		return false
+		print "Login Failed"
+		return False
 	cursor.close()
 
 def userJoinSession(db, sessionID, userID):

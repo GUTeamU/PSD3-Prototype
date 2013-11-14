@@ -11,13 +11,14 @@ createClass(db, "PSD3")
 createClass(db, "Algs3")
 insertSession(db, "PSD3", "14/11/2013 3:00", "14/11/2013 4:00")
 insertSession(db, "Algs3", "14/11/2013 3:00", "14/11/2013 4:00")
+getClasses(db)
+insertSession(db, "Ls", "14/11/2013 3:00", "14/11/2013 4:00")
+
+getUsers(db)
 createUser(db, "1003492c", "123456", "122132132142")
 getUsers(db)
-getClasses(db)
 loginUser(db, "1003492c", "123456")
-print "After"
 
-insertSession(db, "Ls", "14/11/2013 3:00", "14/11/2013 4:00")
 #showAvailableSessions()
 
 # Get user input for selecting the session
