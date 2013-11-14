@@ -81,8 +81,18 @@ def getUsers(db):
 	cursor.close()
 	return users
 
-def loginUser(db, name, password):
-	pass
+def loginUser(db, name, pw):
+	cursor = db.cursor()
+	cursor.execute("SELECT password FROM users WHERE name=username") # don't even know why I thought this would work
+	rows = cursor.fetchall()
+	if not rows:
+		print "This user is not registered on the system."
+		return false
+	elif row[0] == pw:
+		return true
+	else:
+		return false
+	cursor.close()
 
 def userJoinSession(db, sessionID, userID):
 	pass
