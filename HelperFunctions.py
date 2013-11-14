@@ -68,12 +68,12 @@ def getSessions(db, sessionID):
 		print "Invalid session selection"
 	else:
 		for row in rows:
-			print "%s. %s: Start time: %s, End time: %s, Capacity: %s" % (row[0], row[1], row[2], row[3], row[4])
+			print "%s. %s: Start time: %s, End time: %s, Capacity: %s, Space Available: %s " \
+			% (row[0], row[1], row[2], row[3], row[4], getSlotsAvailable(db, row[0]) )
 	cursor.close()
 
 def getSlotsAvailable(db, sessionID):
-	cursor = db.cursor()
-	
+	cursor = db.cursor()	
 	cursor.execute("SELECT sessions.capacity \
 	               FROM sessions \
 	               WHERE sessions.id==(?)", (sessionID,))
@@ -83,10 +83,18 @@ def getSlotsAvailable(db, sessionID):
 	               FROM session_users \
 	               WHERE session_users.session_id==(?)", (sessionID,))
 	rows = cursor.fetchall()
-	
 	cursor.close()
 	return capacity-len(rows)
 
+def userJoinSession(db, sessionID, userID):
+	cursor = db.cursor()
+	if(getSlotsAvailable(db, sessionID) > 0):
+		cursor.execute("INSERT INTO session_users(user_id, session_id) VALUES (?, ?)", (userID, sessionID) )
+		db.commit()
+	cursor.close()
+
+def showUsersSessions(db, userID):
+	pass
 
 def createUser(db, name, password, barcode):
 	pass
@@ -96,9 +104,8 @@ def getUsers(db):
 
 def loginUser(db, name, password):
 	pass
+	
 
-def userJoinSession(db, sessionID, userID):
-	pass
 	
 
 	
