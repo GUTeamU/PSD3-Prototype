@@ -8,44 +8,36 @@ def showAvailableSessions():
 	pass
 
 def init_db():
-	# print glob.glob("*.csv")
 	db = sqlite3.connect(":memory:")
 	cursor = db.cursor()
 	f = open('dbSchema.sql', 'r')
 	sqlscript = f.read()
 	f.close()
 	cursor.executescript(sqlscript)
-	db.commit()
-	
-	# Was used to get all the fields of the DB
-	# cursor.execute("PRAGMA table_info(session_types)")
-	# print cursor.fetchall()
-	
+	db.commit()	
 	cursor.close()
 	return db
+	
+def createClass(db, className):
+	cursor = db.cursor()
+	cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )
+	db.commit()	
+	cursor.close()
 	
 def getClasses(db):
 	cursor = db.cursor()
 	cursor.execute("SELECT sessions.id, session_types.Label FROM sessions, session_types WHERE sessions.session_type_id=session_types.id")
 	db.commit()
 	rows = cursor.fetchall()
+	classes = []
 	if not rows:
 		print "No classes."
 	else:
 		for row in rows:
 			print "%s. %s" % (row[0], row[1]) 
+			classes.append(str(row[1]))
 	cursor.close()
-	
-def createClass(db, className):
-	cursor = db.cursor()
-	cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )
-	db.commit()
-	
-	# cursor.execute("SELECT * FROM session_types")
-	# rows = cursor.fetchall()
-	# print rows
-	
-	cursor.close()
+	return classes
 	
 def insertSession(db, className, start, end):
 	cursor = db.cursor()
@@ -64,6 +56,9 @@ def insertSession(db, className, start, end):
 		print "Class not found."
 	finally:
 		cursor.close()
+	
+def getSession(db, sessionID):
+	pass
 
 	
 	
