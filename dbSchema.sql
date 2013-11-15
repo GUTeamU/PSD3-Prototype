@@ -13,12 +13,12 @@ CREATE TABLE sessions (
 CREATE TABLE session_users (
   user_id INTEGER,
   session_id INTEGER,
-  attended INTEGER
+  attended INTEGER DEFAULT 0
 );
 
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE,
-  password TEXT,
+  full_name TEXT,
   barcode INTEGER
 );

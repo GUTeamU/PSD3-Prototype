@@ -1,57 +1,33 @@
 from HelperFunctions import *
+import sys
 
-def sessions():
-    print"= Old ======="
-    print"1. 30/09/2013"
-    print"2. 07/10/2013"
-    print"3. 14/10/2013" 
-    print"4. 21/10/2013"
-    print"5. 28/10/2013" 
-    print"6. 04/11/2013"
-    print"= Last =======" 
-    print"7. 11/11/2013"
-    print"= Upcoming ==="
-    print"8. 18/11/2013"
-    print"9. 25/11/2013"
-    option = raw_input("[Select a session]\n>>>")
-    return option
+def show_session(session_id):
+    while True:
+        print("list -- List all students that are registered to attend")
+        print("mark [ present | abset ] matric ...")
+        print("import filename -- Import attendance data from a CSV file")
+        print("quit -- exit the program")
+        print("back -- return to the session list")
+        try:
+            choice = raw_input(">>>").split(None, 1)
+            command = choice[0]
+            if command == "quit":
+                sys.exit()
+            elif command == "back":
+                return
+            elif command == "list":
+                list_students(session_id)
+            else:
+                print(choice)
+        except IndexError:
+            print("Invalid command")
 
-def give_sessions():
-    choice2 = sessions()
-
-    if choice2 == "1":
-        print course,"lab 30/09/2013"
-        commands()
-    elif choice2 == "2":
-        print course,"lab 07/10/2013"
-        commands()
-    elif choice2 == "3":
-        print course,"lab 21/10/2013"
-        commands()
-    elif choice2 == "4":
-        print course,"lab 28/102013"
-        commands()
-    else:
-        print"invalid option"
-    choice = give_sessions
-
-
-
-def commands():
-    print"list -- List all students that are registered to attend"
-    print"mark [+ | -]matric -- Mark students presence or absence"
-    print"import filename -- Import attendance data from a CSV file"
-    print"\n"
-    option = raw_input("which option would you like to choose?: ")
-    return option
-
-def choose_command():
-    choice = commands()
-
-    if choice == "list":
-        print "list of all students \n, student\n"
-    elif choice == "import":
-        print "SDFSDFSDFSDF"
+def list_students(session_id):
+    for s in getStudents(db, session_id):
+        sign = "-"
+        if s[2]:
+            sign = "+"
+        print("[{0}] {1} {2}".format(sign, s[1], s[0]))
 
 def select_class():
     classes = getClasses(db)
@@ -59,26 +35,38 @@ def select_class():
     # List of available classes numbered 1...n 
     for i in range(len(classes)):
         print("{0}. {1}".format(i+1, classes[i][1]))
-
+    print("quit -- exit the program")
     try:
-        choice = int(raw_input("[Select a class]\n>>>")) - 1
+        choice = raw_input("[Select a class]\n>>>")
+        if choice == "quit":
+            sys.exit(0)
+        choice = int(choice) - 1
         print(">>>{0}".format(classes[choice][1]))
         select_session(classes[choice][0])
     except ValueError:
         print("Invalid choice")
 
 def select_session(class_id):
-    sessions = getSessions(db, class_id)
+    while True:
+        sessions = getSessions(db, class_id)
 
-    # List of avialable sessions for selected class numbered 1...n
-    for i in range(len(sessions)):
-        print("{0}. {1} - {2}".format(i+1, sessions[i][1], sessions[i][2]))
+        # List of avialable sessions for selected class numbered 1...n
+        for i in range(len(sessions)):
+            print("{0}. {1} - {2}".format(i+1, sessions[i][1], sessions[i][2]))
+        print("back -- return to the class list")
+        print("quit -- exit the program")
 
-    try:
-        choice = int(raw_input("[Select a session]\n>>>")) -1
-        print(sessions[choice][0])
-    except ValueError:
-        print("Invalid choice")
+        try:
+            choice = raw_input("[Select a session]\n>>>")
+            if choice == "quite":
+                sys.exit(0)
+            elif choice == "back":
+                return
+            choice = int(choice) - 1
+            print(">>>{0} - {1}".format(sessions[choice][1], sessions[choice][2]))
+            show_session(sessions[choice][0])
+        except ValueError:
+            print("Invalid choice")
 
 if __name__ == '__main__':
     course = ""

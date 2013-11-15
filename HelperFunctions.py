@@ -6,11 +6,11 @@ DATABASE = ':memory:'
 SCHEMA = 'dbSchema.sql'
 
 USERS = (
-        ('1003492c', '12345678536014'),
-        ('1102103l', '23456789457015'),
-        ('1102115m', '34567890467016'),
-        ('1102374p', '45678901400017'),
-        ('2039411m', '56789901645017'),
+        ('Michael Cromie', '1003492c', '12345678536014'),
+        ('Fraser Leishman', '1102103l', '23456789457015'),
+        ('Andrew McDonald', '1102115m', '34567890467016'),
+        ('Matthew Paterson', '1102374p', '45678901400017'),
+        ('Edvin Malinovskis', '2039411m', '56789901645017'),
         )
 
 CLASSES = (
@@ -100,11 +100,22 @@ def getSessions(db, class_id):
     cursor.execute(sql, (class_id,))
     return cursor.fetchall()
 
-def createUser(db, name, barcode):
+def getStudents(db, session_id):
+    sql = """
+        SELECT users.full_name, users.username, session_users.attended
+        FROM session_users
+        LEFT JOIN users ON(users.id = session_users.user_id)
+        WHERE session_users.session_id = ?
+        """
     cursor = db.cursor()
-    cursor.execute("INSERT INTO users(username, barcode) VALUES (?, ?)", (name, barcode) )
+    cursor.execute(sql, (session_id,))
+    return cursor.fetchall()
+
+def createUser(db, full_name, username, barcode):
+    cursor = db.cursor()
+    sql = "INSERT INTO users(full_name, username, barcode) VALUES (?, ?, ?)"
+    cursor.execute(sql, (full_name, username, barcode) )
     db.commit()
-    cursor.close()
 
 def getUsers(db):
     cursor = db.cursor()
