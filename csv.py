@@ -17,25 +17,30 @@
 #>>> 1102103
 #> Export Successful
 
-import os 
+import os
+from HelperFunctions import *
 os.system('cls' if os.name == 'nt' else 'clear')
 
-database =[
-        ["JP2", "ADS2", "AP3", "AF2", "CS1P", "Alg3", "CS1Q"], #courses
-        ["1","2","3","4","5"], # students
-        ]
+#database =[
+#        ["JP2", "ADS2", "AP3", "AF2", "CS1P", "Alg3", "CS1Q"], #courses
+#        ["1","2","3","4","5"], # students
+#        ]
 
 def export():
-    choice = raw_input(">>Do you want to export a (1) course or a (2) student? ")
-    if choice == "1":
-        exportCourse()
-    elif choice == "2":
-        exportStudent()
-    else: 
-        print ">>Input not recognised, please try again"
-        export()
+	classes = getClasses(db)
+	users = getUsers(db)
+	try:
+	    choice = raw_input(">>Do you want to export a (1) course or a (2) student? ")
+	    if choice == "1":
+	        exportCourse(classes)
+	    elif choice == "2":
+	        exportStudent(users)
+	except ValueError:
+	     print ">>Input not recognised, please try again"
+	     
 
-def exportCourse():
+def exportCourse(database):
+	
     print ">>Enter course name from: "
     for i in range(0, len(database[0])):
 
@@ -54,7 +59,9 @@ def exportCourse():
     print ">>YOU CHOSE COURSE " + database[0][courseNo]
     print "Export Succesful"
 
-def exportStudent():
+def exportStudent(database):
+	for i in range(len(users)):
+		print("{0}. {1}".format(users[i]))
     student = raw_input(">>Enter student's matric number: ")
     print student
     print database[1]
@@ -65,5 +72,8 @@ def exportStudent():
     print "Export Succesful"
 
 
-if __name__ == "__main__":
-    export()
+if __name__ == '__main__':
+	course =""
+	db = init_db()
+	while True:
+    	export()
