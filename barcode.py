@@ -1,3 +1,5 @@
+from HelperFunctions import *
+
 def sessions():
     print"= Old ======="
     print"1. 30/09/2013"
@@ -51,37 +53,35 @@ def choose_command():
     elif choice == "import":
         print "SDFSDFSDFSDF"
 
+def select_class():
+    classes = getClasses(db)
 
-def print_options():
-    print "1. PSD3 lab (Recurring)"
-    print "2. ALG3 lab (Recurring)"
-    print "3. AP3  lab (Recurring)"
-    print "4. PL3  lab (Recurring)"
+    # List of available classes numbered 1...n 
+    for i in range(len(classes)):
+        print("{0}. {1}".format(i+1, classes[i][1]))
 
-def give_option():
-    print_options()
-    choice = raw_input("[Select a class]\n>>>")
+    try:
+        choice = int(raw_input("[Select a class]\n>>>")) - 1
+        print(">>>{0}".format(classes[choice][1]))
+        select_session(classes[choice][0])
+    except ValueError:
+        print("Invalid choice")
 
-    if choice == "1":
-        print "PSD3 lab sessions"
-        course = "PSD"
-        give_sessions()
-    elif choice == "2":
-        print "ALG3 lab sessions"
-        course = "ALG3"
-        give_sessions()
-    elif choice == "3":
-        print "AP3 lab sessions"
-        course = "AP3"
-        give_sessions()
-    elif choice == "4":
-        print "PL3 lab sessions"
-        course = PL3
-        give_sessions()
-    else:
-        print"invalid option"
+def select_session(class_id):
+    sessions = getSessions(db, class_id)
+
+    # List of avialable sessions for selected class numbered 1...n
+    for i in range(len(sessions)):
+        print("{0}. {1} - {2}".format(i+1, sessions[i][1], sessions[i][2]))
+
+    try:
+        choice = int(raw_input("[Select a session]\n>>>")) -1
+        print(sessions[choice][0])
+    except ValueError:
+        print("Invalid choice")
 
 if __name__ == '__main__':
     course = ""
+    db = init_db()
     while True:
-        give_option()
+        select_class()

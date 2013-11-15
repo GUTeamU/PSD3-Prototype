@@ -65,24 +65,18 @@ def populate(db):
 
 def createClass(db, className):
     cursor = db.cursor()
-    cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )    # You need the comma at the end.
-                                                                                    # It won't work without it for some reason.
+    sql = "INSERT INTO session_types(label) VALUES (?)"
+    cursor.execute(sql, (className,) )    # You need the comma at the end.
+                                          # It won't work without it for some reason.
     db.commit()
     cursor.close()
 
 def getClasses(db):
     cursor = db.cursor()
-    cursor.execute("SELECT sessions.id, session_types.Label FROM sessions, session_types WHERE sessions.session_type_id=session_types.id")
+    sql = "SELECT id, label FROM session_types";
+    cursor.execute(sql)
     rows = cursor.fetchall()
-    classes = []
-    if not rows:
-        print "No classes."
-    else:
-        for row in rows:
-            print "%s. %s" % (row[0], row[1]) 
-            classes.append(str(row[1]))
-    cursor.close()
-    return classes
+    return rows
 
 def insertSession(db, class_id, start, end):
     # Thanks to this stack overflow answer: http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
@@ -97,8 +91,14 @@ def insertSession(db, class_id, start, end):
     cursor.close()
     return rowid
 
-def getSession(db, sessionID):
-    pass
+def getSessions(db, class_id):
+    sql = """
+        SELECT id, datetime(starts, 'unixepoch'),
+        time(ends, 'unixepoch') FROM sessions WHERE session_type_id = ?
+        """
+    cursor = db.cursor()
+    cursor.execute(sql, (class_id,))
+    return cursor.fetchall()
 
 def createUser(db, name, barcode):
     cursor = db.cursor()
