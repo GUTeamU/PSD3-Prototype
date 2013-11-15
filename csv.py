@@ -27,44 +27,42 @@ os.system('cls' if os.name == 'nt' else 'clear')
 #        ]
 
 def export():
-	classes = getClasses(db)
-	users = getUsers(db)
-	try:
-	    choice = raw_input(">>Do you want to export a (1) course or a (2) student? ")
-	    if choice == "1":
-	        exportCourse(classes)
-	    elif choice == "2":
-	        exportStudent(users)
-	except ValueError:
-	     print ">>Input not recognised, please try again"
-	     
-
-def exportCourse(database):
-	
-    print ">>Enter course name from: "
-    for i in range(0, len(database[0])):
-
-        print ">>" +  str(i) + ". " + database[0][i]	
-    course = raw_input("")
+    classes = getClasses(db)
+    users = getUsers(db)
     try:
-        courseNo = int(course)
+        choice = raw_input(">>Do you want to export a (1) course or a (2) student? ")
+        if choice == "1":
+            exportCourse(classes)
+        elif choice == "2":
+            exportStudent(users)
     except ValueError:
         print ">>Input not recognised, please try again"
-        exportCourse()
-        return()
-    if (courseNo < 0) or (courseNo > len(database[0]) -1):
+
+
+def exportCourse(database):
+    print ">>Enter course name from: "
+    for i in range(0, len(database[0])):
+        print ">>" +  str(i) + ". " + database[i]	
+    course = raw_input("")
+    try:
+            courseNo = int(course)
+    except ValueError:
         print ">>Input not recognised, please try again"
-        exportCourse()
+        exportCourse(classes)
+        return()
+    if (courseNo < 0) or (courseNo > len(database) -1):
+        print ">>Input not recognised, please try again"
+        exportCourse(classes)
         return
-    print ">>YOU CHOSE COURSE " + database[0][courseNo]
+    print ">>YOU CHOSE COURSE " + database[courseNo]
     print "Export Succesful"
 
 def exportStudent(database):
-	for i in range(len(users)):
-		print("{0}. {1}".format(users[i]))
-    student = raw_input(">>Enter student's matric number: ")
-    print student
-    print database[1]
+    for i in range(len(users)):
+        print("{0}. {1}".format(users[i]))
+        student = raw_input(">>Enter student's matric number: ")
+        print student
+        print database[1]
     while student not in database[1]:
         print ">>Input not recognised, please try again"
         student = raw_input(">>Enter student's matric number: ")
@@ -73,7 +71,7 @@ def exportStudent(database):
 
 
 if __name__ == '__main__':
-	course =""
-	db = init_db()
-	while True:
-    	export()
+    course =""
+    db = init_db()
+    while True:
+        export()
