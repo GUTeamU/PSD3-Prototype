@@ -4,7 +4,7 @@ import sys
 def show_session(session_id):
     while True:
         print("list -- List all students that are registered to attend")
-        print("mark [ present | abset ] matric ...")
+        print("mark [ present | absent ] matric ...")
         print("import filename -- Import attendance data from a CSV file")
         print("quit -- exit the program")
         print("back -- return to the session list")
@@ -17,6 +17,8 @@ def show_session(session_id):
                 return
             elif command == "list":
                 list_students(session_id)
+            elif command == "mark":
+                    mark_students(session_id, choice[1])
             else:
                 print(choice)
         except IndexError:
@@ -28,6 +30,19 @@ def list_students(session_id):
         if s[2]:
             sign = "+"
         print("[{0}] {1} {2}".format(sign, s[1], s[0]))
+
+def mark_students(session_id, line):
+    command = line.split()
+    if len(command) < 2:
+        print("Not enough arguments")
+        return
+
+    if command[0] == "present":
+        markStudents(db, session_id, 1, command[1:])
+    elif command[0] == "absent":
+        markStudents(db, session_id, 0, command[1:])
+    else:
+        print("Unknown command: mark {0}".format(command[0]))
 
 def select_class():
     classes = getClasses(db)

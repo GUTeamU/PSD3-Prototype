@@ -111,6 +111,21 @@ def getStudents(db, session_id):
     cursor.execute(sql, (session_id,))
     return cursor.fetchall()
 
+def markStudents(db, session_id, attended, users):
+    sql = "SELECT id FROM users WHERE username "
+    cursor = db.cursor()
+    if len(users) > 1:
+        sql += "IN({0})".format(",".join("?" * len(users)))
+    else:
+        sql += "= ?"
+    sql = "UPDATE session_users SET attended = ? WHERE session_id = ? AND user_id IN({0})".format(sql)
+    values = [attended, session_id] + users
+    cursor.execute(sql, values)
+    if cursor.rowcount:
+        db.commit()
+    else:
+        db.rollback()
+
 def createUser(db, full_name, username, barcode):
     cursor = db.cursor()
     sql = "INSERT INTO users(full_name, username, barcode) VALUES (?, ?, ?)"
