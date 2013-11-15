@@ -20,8 +20,9 @@ def init_db():
 	
 def createClass(db, className):
 	cursor = db.cursor()
-	cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )
-	db.commit()	
+	cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )	# You need the comma at the end.
+																					# It won't work without it for some reason.
+	db.commit()
 	cursor.close()
 	
 def getClasses(db):
@@ -58,6 +59,45 @@ def insertSession(db, className, start, end):
 	
 def getSession(db, sessionID):
 	pass
+
+def createUser(db, name, password, barcode):
+	cursor = db.cursor()
+	cursor.execute("INSERT INTO users(username, password, barcode) VALUES (?, ?, ?)", (name, password, barcode) )
+	db.commit()
+	cursor.close()
+
+def getUsers(db):
+	cursor = db.cursor()
+	cursor.execute("SELECT username, barcode FROM users")
+	rows = cursor.fetchall()
+	users = []
+	if not rows:
+		print "No users."
+	else:
+		for row in rows:
+			print "%s, %s" % (row[0], row[1])
+			users.append(str(row[1]))
+	cursor.close()
+	return users
+
+def loginUser(db, name, pw):
+	cursor = db.cursor()
+	cursor.execute("SELECT password FROM users WHERE username=(?)", (name,))
+	rows = cursor.fetchall()
+	if not rows:
+		print "This user is not registered on the system."
+		return false
+	elif rows[0][0] == pw:
+		print "Successful"
+		return True
+	else:
+		print "Login Failed"
+		return False
+	cursor.close()
+
+def userJoinSession(db, sessionID, userID):
+	pass
+	
 
 	
 	
