@@ -4,8 +4,6 @@ import datetime
 import time
 
 
-def showAvailableSessions():
-	pass
 
 def init_db():
 	db = sqlite3.connect(":memory:")
