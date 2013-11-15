@@ -20,7 +20,7 @@
 import os 
 os.system('cls' if os.name == 'nt' else 'clear')
 
-database =[
+database = [
         ["JP2", "ADS2", "AP3", "AF2", "CS1P", "Alg3", "CS1Q"], #courses
         ["1","2","3","4","5"], # students
         ]
@@ -39,7 +39,7 @@ def exportCourse():
     print ">>Enter course name from: "
     for i in range(0, len(database[0])):
 
-        print ">>" +  str(i) + ". " + database[0][i]	
+        print ">>" +  str(i) + ". " + database[0][i]
     course = raw_input("")
     try:
         courseNo = int(course)
