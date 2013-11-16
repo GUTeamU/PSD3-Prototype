@@ -6,6 +6,7 @@ CREATE TABLE session_types (
 CREATE TABLE sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   session_type_id INTEGER,
+  label TEXT,
   starts INTEGER,
   ends INTEGER,
   capacity INTEGER

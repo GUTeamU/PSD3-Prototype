@@ -55,10 +55,12 @@ def populate(db):
 
     for i in range(len(CLASSES)):
         createClass(db, CLASSES[i])
+        j = 0
         for row in SESSIONS:
+            j += 1
             start = row + " " + START
             end = row + " " + END
-            sid = insertSession(db, i+1, start, end)
+            sid = insertSession(db, i+1, "Laboratory "+str(j), start, end)
             for uid in range(1, len(USERS)+1):
                 userJoinSession(db, sid, uid)
 
@@ -78,14 +80,14 @@ def getClasses(db):
     rows = cursor.fetchall()
     return rows
 
-def insertSession(db, class_id, start, end):
+def insertSession(db, class_id, label, start, end):
     # Thanks to this stack overflow answer: http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
     startSecs = time.mktime(datetime.datetime.strptime(start, "%d/%m/%Y %H:%M").timetuple())
     endSecs = time.mktime(datetime.datetime.strptime(end, "%d/%m/%Y %H:%M").timetuple())
 
     cursor = db.cursor()
-    sql = "INSERT INTO sessions(session_type_id, starts, ends) VALUES(?, ?, ?)"
-    cursor.execute(sql, (class_id, startSecs, endSecs))
+    sql = "INSERT INTO sessions(session_type_id, label, starts, ends) VALUES(?, ?, ?, ?)"
+    cursor.execute(sql, (class_id, label, startSecs, endSecs))
     db.commit()
     rowid = cursor.lastrowid
     cursor.close()
@@ -98,6 +100,27 @@ def getSessions(db, class_id):
         """
     cursor = db.cursor()
     cursor.execute(sql, (class_id,))
+    return cursor.fetchall()
+
+def getAllStudents(db):
+    sql = """SELECT full_name, username FROM users"""
+    cursor = db.cursor()
+    cursor.execute(sql)
+    return cursor.fetchall()
+
+def getStudentExportData(db, username):
+    sql = """
+    SELECT session_types.label as class, session_types.id, 
+           sessions.label,
+           session_users.attended
+    FROM users
+    LEFT JOIN session_users ON (session_users.user_id = users.id)
+    LEFT JOIN sessions ON(sessions.id = session_users.session_id)
+    LEFT JOIN session_types ON(session_types.id = sessions.session_type_id)
+    WHERE users.username = ?
+    """
+    cursor = db.cursor()
+    cursor.execute(sql, (username,))
     return cursor.fetchall()
 
 def getStudents(db, session_id):
@@ -171,9 +194,6 @@ def userJoinSession(db, session_id, user_id):
     cursor = db.cursor()
     cursor.execute(sql, (session_id, user_id))
     db.commit()
-    for line in data:
-        print(line)
-    pass
 
 def createUser(db, full_name, username, barcode):
     cursor = db.cursor()
