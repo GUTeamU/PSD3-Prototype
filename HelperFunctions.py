@@ -1,93 +1,123 @@
-import glob
 import sqlite3
 import datetime
 import time
 
+DATABASE = ':memory:'
+SCHEMA = 'dbSchema.sql'
+
+USERS = (
+        ('Michael Cromie', '1003492c', '12345678536014'),
+        ('Fraser Leishman', '1102103l', '23456789457015'),
+        ('Andrew McDonald', '1102115m', '34567890467016'),
+        ('Matthew Paterson', '1102374p', '45678901400017'),
+        ('Edvin Malinovskis', '2039411m', '56789901645017'),
+        )
+
+CLASSES = (
+        'PSD3',
+        'Alg3',
+        'AP3',
+        'PL3'
+        )
+
+SESSIONS = (
+        ('30/09/2013'),
+        ('07/10/2013'),
+        ('14/10/2013'),
+        ('21/10/2013'),
+        ('28/10/2013'),
+        ('04/11/2013'),
+        ('11/11/2013'),
+        ('18/11/2013'),
+        ('25/11/2013'),
+        )
+START = '14:00'
+END = '16:00'
 
 def init_db():
-	db = sqlite3.connect(":memory:")
-	cursor = db.cursor()
-	f = open('dbSchema.sql', 'r')
-	sqlscript = f.read()
-	f.close()
-	cursor.executescript(sqlscript)
-	db.commit()	
-	cursor.close()
-	return db
+    db = sqlite3.connect(DATABASE)
+    cursor = db.cursor()
+    with open(SCHEMA, 'r') as f:
+        sqlscript = f.read()
+        cursor.executescript(sqlscript)
+        db.commit()    
+    cursor.close()
+    populate(db)
+    return db
 
-# Creates a class, eg. PSD3 or Algs.	
+def populate(db):
+    for row in USERS:
+        createUser(db, *row)
+
+    for i in range(len(CLASSES)):
+        createClass(db, CLASSES[i])
+        for row in SESSIONS:
+            start = row + " " + START
+            end = row + " " + END
+            sid = insertSession(db, i+1, start, end)
+            for uid in range(1, len(USERS)+1):
+                userJoinSession(db, sid, uid)
+
 def createClass(db, className):
-	cursor = db.cursor()
-	cursor.execute("INSERT INTO session_types(label) VALUES (?)", (className,) )	# You need the comma at the end.
-																					# It won't work without it for some reason.
-	db.commit()
-	cursor.close()
+    """Creates a class, eg. PSD3 or Algs."""
+    cursor = db.cursor()
+    sql = "INSERT INTO session_types(label) VALUES (?)"
+    cursor.execute(sql, (className,) )    # You need the comma at the end.
+                                          # It won't work without it for some reason.
+    db.commit()
+    cursor.close()
 
-# Returns the list of classes currently added.
 def getClasses(db):
-	cursor = db.cursor()
-	cursor.execute("SELECT session_types.id, session_types.Label FROM session_types")
-	rows = cursor.fetchall()
-	classes = []
-	if not rows:
-		print "No classes."
-	else:
-		for row in rows:
-			print "%s. %s" % (row[0], row[1]) 
-			classes.append(str(row[1]))
-	cursor.close()
-	return classes
+    """Returns the list of classes currently added."""
 
-# Creates a session. Session must be associated with a class that already exists in the database.
-# Class is inputted by its unique ID.	
-def insertSession(db, sessionID, start, end, capacity):
-	cursor = db.cursor()
-	try:
-		# Thanks to this stack overflow answer: http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
-		startSecs = time.mktime(datetime.datetime.strptime(start, "%d/%m/%Y %H:%M").timetuple())
-		endSecs = time.mktime(datetime.datetime.strptime(end, "%d/%m/%Y %H:%M").timetuple())
-		
-		cursor.execute("INSERT INTO sessions(session_type_id, starts, ends, capacity) VALUES (?, ?, ?, ?)", (sessionID, startSecs, endSecs, capacity) )
-		db.commit()
-	except:
-		print "Class not found."
-	finally:
-		cursor.close()
+    cursor = db.cursor()
+    sql = "SELECT id, label FROM session_types";
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    return rows
 
-# Prints the list of sessions available for a class via its unique ID.
-def getSessions(db, classID):
-	cursor = db.cursor()
-	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends, sessions.capacity \
-	               FROM sessions, session_types \
-	               WHERE sessions.session_type_id==session_types.id \
-	               AND session_types.id==(?)", (classID,))
-	rows = cursor.fetchall()
-	if not rows:
-		print "Invalid session selection."
-	else:
-		for row in rows:
-			print "%s. %s: Start time: %s, End time: %s, Capacity: %s, Space Available: %s " \
-			% (row[0], row[1], row[2], row[3], row[4], getSlotsAvailable(db, row[0]) )
-	cursor.close()
+def insertSession(db, class_id, start, end):
+    """Creates a session. Session must be associated with a class that already exists in the database."""
+    # Thanks to this stack overflow answer: http://stackoverflow.com/questions/9637838/convert-string-date-to-timestamp-in-python
+    startSecs = time.mktime(datetime.datetime.strptime(start, "%d/%m/%Y %H:%M").timetuple())
+    endSecs = time.mktime(datetime.datetime.strptime(end, "%d/%m/%Y %H:%M").timetuple())
 
-# Prints the specified sessions information
-def getSession(db, sessionID):
-	cursor = db.cursor()
-	cursor.execute("SELECT sessions.id, session_types.label, sessions.starts, sessions.ends, sessions.capacity \
-	               FROM sessions, session_types \
-	               WHERE sessions.session_type_id==session_types.id \
-	               AND sessions.id==(?)", (sessionID,))
-	rows = cursor.fetchall()
-	if not rows:
-		print "Invalid session selection."
-	else:
-		row = rows[0]
-		print "%s. %s: Start time: %s, End time: %s, Capacity: %s, Space Available: %s " \
-		% (row[0], row[1], row[2], row[3], row[4], getSlotsAvailable(db, row[0]) )
-	cursor.close()
+    cursor = db.cursor()
+    sql = "INSERT INTO sessions(session_type_id, starts, ends) VALUES(?, ?, ?)"
+    cursor.execute(sql, (class_id, startSecs, endSecs))
+    db.commit()
+    rowid = cursor.lastrowid
+    cursor.close()
+    return rowid
 
-# Returns the number of available spaces in a given session via its unique session ID.
+def getSessions(db, class_id):
+    """Returns the list of sessions available for a class via its unique ID."""
+    sql = """
+        SELECT id, datetime(starts, 'unixepoch'),
+        time(ends, 'unixepoch') FROM sessions WHERE session_type_id = ?
+        """
+    cursor = db.cursor()
+    cursor.execute(sql, (class_id,))
+    return cursor.fetchall()
+
+def getStudents(db, session_id):
+    """Returns the specified sessions information."""
+    sql = """
+        SELECT users.full_name, users.username, session_users.attended
+        FROM session_users
+        LEFT JOIN users ON(users.id = session_users.user_id)
+        WHERE session_users.session_id = ?
+        """
+    cursor = db.cursor()
+    cursor.execute(sql, (session_id,))
+    return cursor.fetchall()
+
 def getSlotsAvailable(db, sessionID):
+        """
+        Returns the number of available spaces in a given session via its
+        unique session ID.
+        
+        """
 	cursor = db.cursor()	
 	cursor.execute("SELECT sessions.capacity \
 	               FROM sessions \
@@ -101,80 +131,93 @@ def getSlotsAvailable(db, sessionID):
 	cursor.close()
 	return capacity-len(rows)
 
-# Inserts a user into a session if there is enough space.
-# There will need to be more error checking added later on for this function,
-# eg. that they haven't already signed up for a session, checking user exists etc.
-def userJoinSession(db, sessionID, username):
-	cursor = db.cursor()
-	cursor.execute("SELECT id FROM users WHERE username==(?)", (username,))
-	temp = cursor.fetchall()
-	if temp:
-		userID = temp[0][0]
-		if(getSlotsAvailable(db, sessionID) > 0):
-			cursor.execute("INSERT INTO session_users(user_id, session_id) VALUES (?, ?)", (userID, sessionID) )
-			db.commit()
-	else:
-		print "User not in users table"
-	cursor.close()
-
-# Shows the user the sessions they have signed up for.
 def showUsersSessions(db, username):
-	cursor = db.cursor()
-	cursor.execute("SELECT id FROM users WHERE username==(?)", (username,))
-	temp = cursor.fetchall()
-	if temp:
-		userID = temp[0][0]
-		cursor.execute("SELECT session_id \
-		               FROM session_users \
-		               WHERE user_id==(?)", (userID,))
-		rows = cursor.fetchall()
-		if rows:
-			for row in rows:
-				print row[0]
-				getSession(db, row[0])
-		else:
-			print "Not signed up to any sessions."
-	else:
-		print "User not in users table."
-	cursor.close()
+    """Shows the user the sessions they have signed up for."""
+    cursor = db.cursor()
+    cursor.execute("SELECT id FROM users WHERE username==(?)", (username,))
+    temp = cursor.fetchall()
+    if temp:
+        userID = temp[0][0]
+        cursor.execute("SELECT session_id FROM session_users WHERE user_id==(?)", (userID,))
+        rows = cursor.fetchall()
+        if rows:
+            for row in rows:
+                print row[0]
+                getSession(db, row[0])
+        else:
+            print "Not signed up to any sessions."
+    else:
+        print "User not in users table."
+    cursor.close()
 
-# Creates a user in the user database.
-def createUser(db, name, password, barcode):
-	cursor = db.cursor()
-	cursor.execute("INSERT INTO users(username, password, barcode) VALUES (?, ?, ?)", (name, password, barcode) )
-	db.commit()
-	cursor.close()
+def markStudents(db, session_id, attended, users):
+    sql = "SELECT id FROM users WHERE username "
+    cursor = db.cursor()
+    if len(users) > 1:
+        sql += "IN({0})".format(",".join("?" * len(users)))
+    else:
+        sql += "= ?"
+    sql = "UPDATE session_users SET attended = ? WHERE session_id = ? AND user_id IN({0})".format(sql)
+    values = [attended, session_id] + users
+    cursor.execute(sql, values)
+    if cursor.rowcount:
+        db.commit()
+    else:
+        db.rollback()
 
-# Gets a list of users and their barcodes.
+def updateAttendance(db, session_id, data):
+    sql = "UPDATE session_users SET attended = 0 WHERE session_id = ?"
+    cursor = db.cursor()
+    cursor.execute(sql, (session_id,))
+    if cursor.rowcount:
+        sql = "SELECT id FROM users WHERE barcode "
+        if len(data) > 1:
+            sql += "IN({0})".format(",".join("?" * len(data)))
+        else:
+            sql += "= ?"
+        sql = "UPDATE session_users SET attended = 1 WHERE session_id = ? AND user_id IN({0})".format(sql)
+        values = [session_id] + [row[0] for row in data]
+        print values
+        cursor.execute(sql, values)
+        if cursor.rowcount:
+            db.commit()
+            return
+
+    # one of the updates failed
+    db.rollback()
+
+def createUser(db, full_name, username, barcode):
+    """Creates a user in the user database."""
+    cursor = db.cursor()
+    sql = "INSERT INTO users(full_name, username, barcode) VALUES (?, ?, ?)"
+    cursor.execute(sql, (full_name, username, barcode) )
+    db.commit()
+
+def userJoinSession(db, session_id, user_id):
+    """Registers the user for the session."""
+    sql = "INSERT INTO session_users(session_id, user_id) VALUES(?, ?)"
+    cursor = db.cursor()
+    cursor.execute(sql, (session_id, user_id))
+    db.commit()
+
+def createUser(db, full_name, username, barcode):
+    cursor = db.cursor()
+    sql = "INSERT INTO users(full_name, username, barcode) VALUES (?, ?, ?)"
+    cursor.execute(sql, (full_name, username, barcode) )
+    db.commit()
+
 def getUsers(db):
-	cursor = db.cursor()
-	cursor.execute("SELECT id, username, barcode FROM users")
-	rows = cursor.fetchall()
-	users = []
-	if not rows:
-		print "No users."
-	else:
-		for row in rows:
-			print "%s, %s, %s" % (row[0], row[1], row[2])
-			users.append(str(row[1]))
-	cursor.close()
-	return users
+    """Gets a list of users and their barcodes."""
+    cursor = db.cursor()
+    cursor.execute("SELECT id, username, barcode FROM users")
+    rows = cursor.fetchall()
+    users = []
+    if not rows:
+        print "No users."
+    else:
+        for row in rows:
+            print "%s, %s, %s" % (row[0], row[1], row[2])
+            users.append(str(row[1]))
+    cursor.close()
+    return users
 
-# A simple login function.
-def loginUser(db, name, pw):
-	cursor = db.cursor()
-	cursor.execute("SELECT password FROM users WHERE username=(?)", (name,))
-	rows = cursor.fetchall()
-	if not rows:
-		print "This user is not registered on the system."
-		return false
-	elif rows[0][0] == pw:
-		print "Successful."
-		return True
-	else:
-		print "Login Failed."
-		return False
-	cursor.close()	
-	
-# if __name__ == '__main__':
-# 	run()
