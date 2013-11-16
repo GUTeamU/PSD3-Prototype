@@ -88,18 +88,6 @@ def exportStudent():
         except IOError:
             print("Error: couldn't save to file {0}".format(filename))
 
-
-    for i in range(len(users)):
-        print("{0}. {1}".format(users[i]))
-        print student
-        print database[1]
-    while student not in database[1]:
-        print ">>Input not recognised, please try again"
-        student = raw_input(">>Enter student's matric number: ")
-    print ">>YOU CHOSE STUDENT " + student  
-    print "Export Succesful"
-
-
 def listStudentData(data):
     print("-"*50)
     style = "| {0:<6} | {1:<11} | {2:<13} | {3:<7} |"
