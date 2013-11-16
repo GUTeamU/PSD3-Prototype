@@ -42,7 +42,7 @@ def export():
 def exportCourse(database):
     print ">>Enter course name from: "
     for i in range(0, len(database[0])):
-        print ">>" +  str(i) + ". " + database[i]	
+        print ">>" +  str(i) + ". " + database[i]       
     course = raw_input("")
     try:
             courseNo = int(course)
