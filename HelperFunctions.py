@@ -126,6 +126,55 @@ def markStudents(db, session_id, attended, users):
     else:
         db.rollback()
 
+def updateAttendance(db, session_id, data):
+    sql = "UPDATE session_users SET attended = 0 WHERE session_id = ?"
+    cursor = db.cursor()
+    cursor.execute(sql, (session_id,))
+    if cursor.rowcount:
+        sql = "SELECT id FROM users WHERE barcode "
+        if len(data) > 1:
+            sql += "IN({0})".format(",".join("?" * len(data)))
+        else:
+            sql += "= ?"
+        sql = "UPDATE session_users SET attended = 1 WHERE session_id = ? AND user_id IN({0})".format(sql)
+        values = [session_id] + [row[0] for row in data]
+        cursor.execute(sql, values)
+        if cursor.rowcount:
+            db.commit()
+            return
+
+    # one of the updates failed
+    db.rollback()
+
+def createUser(db, full_name, username, barcode):
+    cursor = db.cursor()
+    sql = "INSERT INTO users(full_name, username, barcode) VALUES (?, ?, ?)"
+    cursor.execute(sql, (full_name, username, barcode) )
+    db.commit()
+
+def getUsers(db):
+    cursor = db.cursor()
+    cursor.execute("SELECT username, barcode FROM users")
+    rows = cursor.fetchall()
+    users = []
+    if not rows:
+        print "No users."
+    else:
+        for row in rows:
+            print "%s, %s" % (row[0], row[1])
+            users.append(str(row[1]))
+    cursor.close()
+    return users
+
+def userJoinSession(db, session_id, user_id):
+    sql = "INSERT INTO session_users(session_id, user_id) VALUES(?, ?)"
+    cursor = db.cursor()
+    cursor.execute(sql, (session_id, user_id))
+    db.commit()
+    for line in data:
+        print(line)
+    pass
+
 def createUser(db, full_name, username, barcode):
     cursor = db.cursor()
     sql = "INSERT INTO users(full_name, username, barcode) VALUES (?, ?, ?)"

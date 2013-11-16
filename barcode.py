@@ -18,7 +18,9 @@ def show_session(session_id):
             elif command == "list":
                 list_students(session_id)
             elif command == "mark":
-                    mark_students(session_id, choice[1])
+                mark_students(session_id, choice[1])
+            elif command == "import":
+                import_attendance(session_id, choice[1])
             else:
                 print(choice)
         except IndexError:
@@ -31,8 +33,15 @@ def list_students(session_id):
             sign = "+"
         print("[{0}] {1} {2}".format(sign, s[1], s[0]))
 
-def mark_students(session_id, line):
-    command = line.split()
+def import_attendance(session_id, arg):
+    try:
+        lines = [[line.rstrip('\n').split(",")] for line in open(arg)]
+        updateAttendance(db, session_id, lines)
+    except IOError:
+        print("File not found: {0}".format(arg))
+
+def mark_students(session_id, arg):
+    command = arg.split()
     if len(command) < 2:
         print("Not enough arguments")
         return
