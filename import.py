@@ -82,7 +82,7 @@ def select_session(class_id):
 
         try:
             choice = raw_input("[Select a session]\n>>>")
-            if choice == "quite":
+            if choice == "quit":
                 sys.exit(0)
             elif choice == "back":
                 return
