@@ -1,9 +1,9 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
-DROP TABLE sessions;
-DROP TABLE session_types;
-DROP TABLE users;
-DROP TABLE session_users;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS session_types;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS session_users;
 CREATE TABLE session_types (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   label TEXT
