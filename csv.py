@@ -17,53 +17,111 @@
 #>>> 1102103
 #> Export Successful
 
-import os 
+import os
+from HelperFunctions import *
 os.system('cls' if os.name == 'nt' else 'clear')
+from time import gmtime, strftime
 
-database = [
-        ["JP2", "ADS2", "AP3", "AF2", "CS1P", "Alg3", "CS1Q"], #courses
-        ["1","2","3","4","5"], # students
-        ]
+STUDENT_FILE = "student_{0}_{1}.csv"
+COURSE_FILE = "course_{0}_{1}.csv"
+
+#database =[
+#        ["JP2", "ADS2", "AP3", "AF2", "CS1P", "Alg3", "CS1Q"], #courses
+#        ["1","2","3","4","5"], # students
+#        ]
 
 def export():
-    choice = raw_input(">>Do you want to export a (1) course or a (2) student? ")
-    if choice == "1":
-        exportCourse()
-    elif choice == "2":
-        exportStudent()
-    else: 
-        print ">>Input not recognised, please try again"
-        export()
-
-def exportCourse():
-    print ">>Enter course name from: "
-    for i in range(0, len(database[0])):
-
-        print ">>" +  str(i) + ". " + database[0][i]
-    course = raw_input("")
     try:
-        courseNo = int(course)
+        choice = raw_input(">>Do you want to export a (1) course or a (2) student? ")
+        if choice == "1":
+            exportCourse()
+        elif choice == "2":
+            exportStudent()
     except ValueError:
         print ">>Input not recognised, please try again"
-        exportCourse()
-        return()
-    if (courseNo < 0) or (courseNo > len(database[0]) -1):
-        print ">>Input not recognised, please try again"
-        exportCourse()
-        return
-    print ">>YOU CHOSE COURSE " + database[0][courseNo]
-    print "Export Succesful"
+
+
+def exportCourse():
+    listCourses()
+    while True:
+        try:
+            course_id = raw_input(">>Enter course name:")
+            data = getCourseExportData(db, course_id)
+            filename = COURSE_FILE.format(strftime("%Y-%m-%d", gmtime()), course_id)
+            with open(filename, "w") as f:
+                labels = getCourseSessionLabels(db, course_id)
+                f.write("First name, Surname, ID number, Assignment: ")
+                f.write(", Assignment: ".join(labels)+"\r")
+                for row in data:
+                    # take the first and last names from the full name
+                    first = row[0].split(" ")[0]
+                    last = row[0].split(" ")[-1]
+                    row = [first] + row
+                    row[1] = last
+
+                    f.write(",".join(row) + "\r")
+            print(">>Export Succesful: {0}".format(filename))
+            return
+        except ValueError:
+            print ">>Input not recognised, please try again"
+        except IOError:
+            print(">>Error: couldn't save to file {0}".format(filename))
 
 def exportStudent():
-    student = raw_input(">>Enter student's matric number: ")
-    print student
-    print database[1]
-    while student not in database[1]:
-        print ">>Input not recognised, please try again"
+    data = getAllStudents(db)
+    listStudens(data)
+
+    while True:
         student = raw_input(">>Enter student's matric number: ")
-    print ">>YOU CHOSE STUDENT " + student  
-    print "Export Succesful"
+        data = getStudentExportData(db, student)
+        if not data:
+            print("Student not found")
+            continue
+
+        listStudentData(data)
+
+        filename = STUDENT_FILE.format(strftime("%Y-%m-%d", gmtime()), student)
+        try:
+            with open(filename, "w") as f:
+                f.write("Course,ID number,Assignment,Mark\r")
+                for row in data:
+                    if row[3]:
+                        mark = "present"
+                    else:
+                        mark = "absent"
+                    f.write("{0},{1},{2},{3}\r".format(row[0], row[1], row[2], mark))
+
+            print("Export Succesful: {0}".format(filename))
+            return
+        except IOError:
+            print("Error: couldn't save to file {0}".format(filename))
+
+def listCourses():
+    style = "| {0:<6} | {1:<11} |"
+    print(style.format("Course", "ID"))
+    for row in getCourses(db):
+        print(style.format(*row))
+
+def listStudentData(data):
+    print("-"*50)
+    style = "| {0:<6} | {1:<11} | {2:<13} | {3:<7} |"
+    print(style.format("Course", "ID", "Assignment", "Mark"))
+    print("-"*50)
+    for row in data:
+        print(style.format(*row))
+    print("-"*50)
+
+def listStudens(data):
+    style = "| {1:<8} | {0:<35} |"
+    print("-"*50)
+    print(style.format("Name", "Matric"))
+    print("-"*50)
+    for row in data:
+        print(style.format(*row))
+    print("-"*50)
 
 
-if __name__ == "__main__":
-    export()
+if __name__ == '__main__':
+    db = init_db()
+    while True:
+        export()

@@ -2,7 +2,7 @@ import sqlite3
 import datetime
 import time
 
-DATABASE = ':memory:'
+DATABASE = 'prototype.db'
 SCHEMA = 'dbSchema.sql'
 
 USERS = (
@@ -34,15 +34,14 @@ SESSIONS = (
 START = '14:00'
 END = '16:00'
 
-def init_db():
+def init_db(reset = False):
     db = sqlite3.connect(DATABASE)
     cursor = db.cursor()
-    with open(SCHEMA, 'r') as f:
-        sqlscript = f.read()
-        cursor.executescript(sqlscript)
-        db.commit()    
-    cursor.close()
-    populate(db)
+    if reset:
+        with open(SCHEMA, 'r') as f:
+            sqlscript = f.read()
+            cursor.executescript(sqlscript)
+            db.commit()    
     return db
 
 def populate(db):
@@ -51,10 +50,12 @@ def populate(db):
 
     for i in range(len(CLASSES)):
         createClass(db, CLASSES[i])
+        j = 0
         for row in SESSIONS:
+            j += 1
             start = row + " " + START
             end = row + " " + END
-            sid = insertSession(db, i+1, start, end)
+            sid = insertSession(db, i+1, "Laboratory "+str(j), start, end)
             for uid in range(1, len(USERS)+1):
                 userJoinSession(db, sid, uid)
 
@@ -98,6 +99,64 @@ def getSessions(db, class_id):
         """
     cursor = db.cursor()
     cursor.execute(sql, (class_id,))
+    return cursor.fetchall()
+
+def getAllStudents(db):
+    sql = """SELECT full_name, username FROM users"""
+    cursor = db.cursor()
+    cursor.execute(sql)
+    return cursor.fetchall()
+
+def getCourses(db):
+    sql = """SELECT label, id FROM session_types"""
+    cursor = db.cursor()
+    cursor.execute(sql)
+    return cursor.fetchall()
+
+def getCourseSessionLabels(db, session_type_id):
+    sql = """SELECT sessions.label FROM sessions WHERE session_type_id = ?"""
+    cursor = db.cursor()
+    cursor.execute(sql, (session_type_id,))
+    return (x[0] for x in cursor.fetchall())
+
+def getCourseExportData(db, session_type_id):
+    sql = """
+        SELECT DISTINCT users.full_name, users.username, session_users.user_id FROM sessions
+        LEFT JOIN session_users ON(session_users.session_id = sessions.id)
+        LEFT JOIN users ON(users.id = session_users.user_id)
+        WHERE sessions.session_type_id = ?
+    """
+
+    cursor = db.cursor()
+    cursor.execute(sql, (session_type_id,))
+
+    students = cursor.fetchall()
+    for i in range(len(students)):
+        sql = """
+        SELECT session_users.attended FROM session_users
+        LEFT JOIN sessions ON(sessions.id = session_users.session_id)
+        WHERE sessions.session_type_id = ?
+        AND session_users.user_id = ?
+        """
+        cursor.execute(sql, (session_type_id, students[i][2]))
+        f = lambda x: x and "present" or "absent"
+        students[i] = list(students[i][:2]) + [f(x[0]) for x in cursor.fetchall()]
+
+    return students
+
+def getStudentExportData(db, username):
+    sql = """
+    SELECT session_types.label as class, session_types.id, 
+           sessions.label,
+           session_users.attended
+    FROM users
+    LEFT JOIN session_users ON (session_users.user_id = users.id)
+    LEFT JOIN sessions ON(sessions.id = session_users.session_id)
+    LEFT JOIN session_types ON(session_types.id = sessions.session_type_id)
+    WHERE users.username = ?
+    """
+    cursor = db.cursor()
+    cursor.execute(sql, (username,))
     return cursor.fetchall()
 
 def getStudents(db, session_id):
@@ -177,7 +236,6 @@ def updateAttendance(db, session_id, data):
             sql += "= ?"
         sql = "UPDATE session_users SET attended = 1 WHERE session_id = ? AND user_id IN({0})".format(sql)
         values = [session_id] + [row[0] for row in data]
-        print values
         cursor.execute(sql, values)
         if cursor.rowcount:
             db.commit()
@@ -192,6 +250,20 @@ def createUser(db, full_name, username, barcode):
     sql = "INSERT INTO users(full_name, username, barcode) VALUES (?, ?, ?)"
     cursor.execute(sql, (full_name, username, barcode) )
     db.commit()
+
+def getUsers(db):
+    cursor = db.cursor()
+    cursor.execute("SELECT username, barcode FROM users")
+    rows = cursor.fetchall()
+    users = []
+    if not rows:
+        print "No users."
+    else:
+        for row in rows:
+            print "%s, %s" % (row[0], row[1])
+            users.append(str(row[1]))
+    cursor.close()
+    return users
 
 def userJoinSession(db, session_id, user_id):
     """Registers the user for the session."""
@@ -221,3 +293,8 @@ def getUsers(db):
     cursor.close()
     return users
 
+def userJoinSession(db, session_id, user_id):
+    sql = "INSERT INTO session_users(session_id, user_id) VALUES(?, ?)"
+    cursor = db.cursor()
+    cursor.execute(sql, (session_id, user_id))
+    db.commit()
