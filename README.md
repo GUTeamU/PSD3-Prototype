@@ -6,7 +6,7 @@
 
 1. Clone the repository
 
-2. Initialise the database:
+2. Initialise the database in python console:
 ```python
 from HelperFunctions import init_db
 init_db(True)
@@ -14,7 +14,7 @@ init_db(True)
 
 # Usage
 
-## Exporting couse and student data
+## Exporting course and student data
 
 Run the export script and follow the instructions:
 ```bash
