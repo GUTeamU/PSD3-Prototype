@@ -4,7 +4,32 @@ from HelperFunctions import *
 
 # Import the sessions
 # Present the user with the sessions
-init_db()
+db = init_db()
+
+getClasses(db)
+createClass(db, "PSD3")
+createClass(db, "Algs3")
+getClasses(db)
+
+insertSession(db, 1, "14/11/2013 3:00", "14/11/2013 4:00", 10)
+insertSession(db, 1, "14/11/2013 5:00", "14/11/2013 6:00", 10)
+insertSession(db, 2, "14/11/2013 3:00", "14/11/2013 4:00", 15)
+insertSession(db, 3, "14/11/2013 3:00", "14/11/2013 4:00", 50)
+
+getUsers(db)
+createUser(db, "1003492c", "123456", "122132132142")
+getUsers(db)
+loginUser(db, "1003492c", "123456")
+
+getSessions(db, 1)
+userJoinSession(db, 1, 12)
+getSessions(db, 1)
+userJoinSession(db, 1, "1003492c")
+getSessions(db, 1)
+
+showUsersSessions(db, "1003492c")
+showUsersSessions(db, "12")
+
 #showAvailableSessions()
 
 # Get user input for selecting the session
