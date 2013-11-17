@@ -2,8 +2,8 @@ import sqlite3
 import datetime
 import time
 
-DATABASE = ':memory:'
 SCHEMA = 'dbSchema.sql'
+DATABASE = 'prototype.db'
 
 USERS = (
         ('Michael Cromie', '1003492c', '12345678536014'),
@@ -38,15 +38,14 @@ END = '16:00'
 def showAvailableSessions():
     pass
 
-def init_db():
+def init_db(reset = False):
     db = sqlite3.connect(DATABASE)
     cursor = db.cursor()
-    with open(SCHEMA, 'r') as f:
-        sqlscript = f.read()
-        cursor.executescript(sqlscript)
-        db.commit()    
-    cursor.close()
-    populate(db)
+    if reset:
+        with open(SCHEMA, 'r') as f:
+            sqlscript = f.read()
+            cursor.executescript(sqlscript)
+            db.commit()    
     return db
 
 def populate(db):
@@ -107,6 +106,43 @@ def getAllStudents(db):
     cursor = db.cursor()
     cursor.execute(sql)
     return cursor.fetchall()
+
+def getCourses(db):
+    sql = """SELECT label, id FROM session_types"""
+    cursor = db.cursor()
+    cursor.execute(sql)
+    return cursor.fetchall()
+
+def getCourseSessionLabels(db, session_type_id):
+    sql = """SELECT sessions.label FROM sessions WHERE session_type_id = ?"""
+    cursor = db.cursor()
+    cursor.execute(sql, (session_type_id,))
+    return (x[0] for x in cursor.fetchall())
+
+def getCourseExportData(db, session_type_id):
+    sql = """
+        SELECT DISTINCT users.full_name, users.username, session_users.user_id FROM sessions
+        LEFT JOIN session_users ON(session_users.session_id = sessions.id)
+        LEFT JOIN users ON(users.id = session_users.user_id)
+        WHERE sessions.session_type_id = ?
+    """
+
+    cursor = db.cursor()
+    cursor.execute(sql, (session_type_id,))
+
+    students = cursor.fetchall()
+    for i in range(len(students)):
+        sql = """
+        SELECT session_users.attended FROM session_users
+        LEFT JOIN sessions ON(sessions.id = session_users.session_id)
+        WHERE sessions.session_type_id = ?
+        AND session_users.user_id = ?
+        """
+        cursor.execute(sql, (session_type_id, students[i][2]))
+        f = lambda x: x and "present" or "absent"
+        students[i] = list(students[i][:2]) + [f(x[0]) for x in cursor.fetchall()]
+
+    return students
 
 def getStudentExportData(db, username):
     sql = """
