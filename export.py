@@ -45,7 +45,7 @@ def exportCourse():
     listCourses()
     while True:
         try:
-            course_id = raw_input(">>Enter course name:")
+            course_id = raw_input(">>Enter course ID:")
             data = getCourseExportData(db, course_id)
             filename = COURSE_FILE.format(strftime("%Y-%m-%d", gmtime()), course_id)
             with open(filename, "w") as f:
@@ -97,19 +97,22 @@ def exportStudent():
             print("Error: couldn't save to file {0}".format(filename))
 
 def listCourses():
-    style = "| {0:<6} | {1:<11} |"
+    print("-"*17)
+    style = "| {0:<6} | {1:<4} |"
     print(style.format("Course", "ID"))
+    print("-"*17)
     for row in getCourses(db):
         print(style.format(*row))
+    print("-"*17)
 
 def listStudentData(data):
-    print("-"*50)
-    style = "| {0:<6} | {1:<11} | {2:<13} | {3:<7} |"
+    print("-"*43)
+    style = "| {0:<6} | {1:<4} | {2:<13} | {3:<7} |"
     print(style.format("Course", "ID", "Assignment", "Mark"))
-    print("-"*50)
+    print("-"*43)
     for row in data:
         print(style.format(*row))
-    print("-"*50)
+    print("-"*43)
 
 def listStudens(data):
     style = "| {1:<8} | {0:<35} |"
